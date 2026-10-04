@@ -39,13 +39,6 @@
   }
   input[type=range] { width: 74px; accent-color: #3b82f6; }
   input[type=file] { font-size: 11px; color: #9fb0cf; max-width: 170px; }
-  input[type=text] {
-    background: #0a0f1c; border: 1px solid #24334f;
-    border-radius: 8px; color: #e6ecff;
-    padding: 7px 10px; font-size: 13px; outline: none;
-    min-width: 0; flex: 1 1 180px;
-  }
-  input[type=text]:focus { border-color: #3b82f6; }
   .val {
     min-width: 36px; text-align: right;
     color: #60a5fa; font-weight: 700;
@@ -64,8 +57,6 @@
   #stop:hover:not(:disabled)    { background: #dc2626; }
   #restart { background: #475569; }
   #restart:hover:not(:disabled) { background: #334155; }
-  #searchBtn { background: #16a34a; }
-  #searchBtn:hover:not(:disabled) { background: #15803d; }
   button:disabled { background: #29354a !important; color: #5b6b85 !important; cursor: not-allowed; }
   #status { font-size: 12px; color: #9fb0cf; min-height: 14px; text-align: center; padding: 0 8px; }
   #hud {
@@ -90,71 +81,23 @@
     -webkit-user-select: none; user-select: none;
     -webkit-tap-highlight-color: transparent;
     max-width: 100%;
-    max-height: calc(100vh - 300px);
-    max-height: calc(100dvh - 300px);
+    max-height: calc(100vh - 260px);
+    max-height: calc(100dvh - 260px);
     width: auto; height: auto;
   }
   .hint { font-size: 11px; color: #566a88; letter-spacing: 1px; text-align: center; padding-bottom: 4px; }
-
-  /* Barra de búsqueda */
-  #searchRow {
-    display: flex; gap: 8px; align-items: center;
-    width: 100%; max-width: 940px;
-    background: #0f1626; border: 1px solid #1f2c44;
-    border-radius: 12px; padding: 8px 10px;
-  }
-  #searchRow input[type=text] { flex: 1; }
-
-  /* Resultados */
-  #results {
-    width: 100%; max-width: 940px;
-    background: #0f1626; border: 1px solid #1f2c44;
-    border-radius: 12px;
-    max-height: 260px; overflow-y: auto;
-    display: none;
-  }
-  #results.open { display: block; }
-  .result {
-    display: flex; gap: 10px; align-items: center;
-    padding: 8px 10px; cursor: pointer;
-    border-bottom: 1px solid #16203a;
-    transition: background .12s;
-  }
-  .result:last-child { border-bottom: none; }
-  .result:hover { background: #16203a; }
-  .result img {
-    width: 72px; height: 40px; object-fit: cover;
-    border-radius: 4px; background: #050810; flex-shrink: 0;
-  }
-  .result .meta { flex: 1; min-width: 0; }
-  .result .t {
-    font-size: 12px; color: #e6ecff;
-    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-  }
-  .result .s { font-size: 10px; color: #6d80a0; margin-top: 2px; }
-  .result .dur {
-    font-size: 11px; color: #60a5fa; font-weight: 600;
-    font-variant-numeric: tabular-nums; flex-shrink: 0;
-  }
-  #backendCfg {
-    width: 100%; max-width: 940px;
-    display: flex; gap: 8px; align-items: center;
-    font-size: 11px; color: #6d80a0;
-  }
-  #backendCfg input { flex: 1; font-size: 11px; padding: 5px 8px; }
-
   @media (max-width: 640px) {
     h1 { font-size: 14px; letter-spacing: 3px; }
     #controls { gap: 6px 10px; padding: 7px 10px; }
     #controls label { font-size: 11px; gap: 4px; }
     input[type=range] { width: 58px; }
+    input[type=file] { max-width: 130px; font-size: 10px; }
     .val { min-width: 30px; font-size: 11px; }
     button { padding: 6px 9px; font-size: 12px; min-width: 68px; }
     #hud { gap: 14px; font-size: 13px; }
     #hud .k { font-size: 9px; }
     #stats { font-size: 10px; gap: 8px; }
-    #game { max-height: calc(100vh - 270px); max-height: calc(100dvh - 270px); }
-    .result img { width: 56px; height: 32px; }
+    #game { max-height: calc(100vh - 230px); max-height: calc(100dvh - 230px); }
   }
 </style>
 </head>
@@ -162,19 +105,8 @@
 
 <h1>GUITAR <span>4K</span></h1>
 
-<div id="searchRow">
-  <input type="text" id="search" placeholder="Buscar canción en YouTube…" autocomplete="off">
-  <button id="searchBtn">🔍 Buscar</button>
-</div>
-
-<div id="results"></div>
-
-<div id="backendCfg">
-  <span>Servidor:</span>
-  <input type="text" id="apiUrl" value="http://localhost:3000" spellcheck="false">
-</div>
-
 <div id="controls">
+  <input type="file" id="file" accept="audio/*">
   <label>Densidad
     <input type="range" id="density" min="0" max="1" step="0.02" value="0.55">
     <span class="val" id="densityVal">55</span>
@@ -194,9 +126,6 @@
   <button id="play" disabled>▶ Jugar</button>
   <button id="stop" disabled>⏹ Parar</button>
   <button id="restart" disabled>↻ Reiniciar</button>
-  <label style="font-size:11px;">
-    📁 <input type="file" id="file" accept="audio/*">
-  </label>
 </div>
 
 <div id="hud">
@@ -211,7 +140,7 @@
   <div>Superset <b id="supercount">0</b></div>
 </div>
 
-<div id="status">Busca una canción o carga un archivo local.</div>
+<div id="status">Elige un archivo de audio para comenzar.</div>
 <canvas id="game" width="400" height="640"></canvas>
 <div class="hint" id="hint">TECLAS: D · F · J · K · [ESPACIO] pausar · [ESC] parar</div>
 
@@ -306,7 +235,6 @@
   // ============================================================
   function el(id) { return document.getElementById(id); }
   function setStatus(t) { el('status').textContent = t; }
-  function apiBase() { return el('apiUrl').value.replace(/\/+$/, ''); }
 
   function updateSliderLabels() {
     el('densityVal').textContent = Math.round(parseFloat(el('density').value) * 100);
@@ -704,9 +632,12 @@
   }
 
   // ============================================================
-  //  Carga desde ArrayBuffer (usado por archivo local y YouTube)
+  //  Carga de archivo local
   // ============================================================
-  async function loadAudioFromArrayBuffer(arr, label) {
+  el('file').addEventListener('change', async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
     killSource();
     gameState = 'idle';
     pausedAt = 0;
@@ -722,10 +653,12 @@
     el('combo').textContent = '0';
     updateStats();
 
+    setStatus('Leyendo archivo…');
     try {
       if (!actx) actx = new (window.AudioContext || window.webkitAudioContext)();
       if (actx.state === 'suspended') await actx.resume();
 
+      const arr = await file.arrayBuffer();
       setStatus('Decodificando audio…');
       audioBuffer = await actx.decodeAudioData(arr);
       songDuration = audioBuffer.duration;
@@ -733,118 +666,13 @@
       analysisResult = await analyze(audioBuffer);
       buildChart();
 
-      setStatus(`Listo · ${label} · ${analysisResult.onsets.length} onsets · ${songDuration.toFixed(1)}s`);
+      setStatus(`Listo (melodía) · ${analysisResult.onsets.length} onsets · ${songDuration.toFixed(1)}s`);
       updateButtons();
     } catch (err) {
       console.error(err);
       setStatus('Error: ' + err.message);
       updateButtons();
     }
-  }
-
-  // ============================================================
-  //  Búsqueda en YouTube (vía backend)
-  // ============================================================
-  function fmtDur(sec) {
-    if (!sec || sec < 0) return '—';
-    const m = Math.floor(sec / 60);
-    const s = Math.floor(sec % 60);
-    return `${m}:${s.toString().padStart(2, '0')}`;
-  }
-
-  async function searchYouTube() {
-    const q = el('search').value.trim();
-    if (!q) return;
-    const api = apiBase();
-    if (!api) { setStatus('Falta la URL del servidor.'); return; }
-
-    el('searchBtn').disabled = true;
-    setStatus('Buscando en YouTube…');
-    try {
-      const res = await fetch(`${api}/api/search?q=${encodeURIComponent(q)}`);
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const data = await res.json();
-      if (!data.results || data.results.length === 0) {
-        setStatus('Sin resultados.');
-        el('results').classList.remove('open');
-        el('results').innerHTML = '';
-        return;
-      }
-      renderResults(data.results);
-      setStatus(`${data.results.length} resultados. Elige uno.`);
-    } catch (err) {
-      console.error(err);
-      setStatus('Error de búsqueda: ' + err.message + ' (¿servidor encendido?)');
-    } finally {
-      el('searchBtn').disabled = false;
-    }
-  }
-
-  function renderResults(list) {
-    const box = el('results');
-    box.innerHTML = '';
-    for (const r of list) {
-      const div = document.createElement('div');
-      div.className = 'result';
-      div.innerHTML = `
-        <img src="${r.thumbnail || ''}" alt="" loading="lazy">
-        <div class="meta">
-          <div class="t">${escapeHtml(r.title || '')}</div>
-          <div class="s">${escapeHtml(r.uploader || '')}</div>
-        </div>
-        <div class="dur">${fmtDur(r.duration)}</div>
-      `;
-      div.addEventListener('click', () => loadFromYouTube(r));
-      box.appendChild(div);
-    }
-    box.classList.add('open');
-  }
-
-  function escapeHtml(s) {
-    return String(s).replace(/[&<>"']/g, c => ({
-      '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
-    })[c]);
-  }
-
-  async function loadFromYouTube(r) {
-    const api = apiBase();
-    if (!api) { setStatus('Falta la URL del servidor.'); return; }
-
-    el('results').classList.remove('open');
-    el('search').value = r.title || '';
-    setStatus(`Descargando audio de "${r.title}"…`);
-
-    try {
-      const url = `${api}/api/audio?id=${encodeURIComponent(r.id)}`;
-      const res = await fetch(url);
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const arr = await res.arrayBuffer();
-      await loadAudioFromArrayBuffer(arr, r.title || r.id);
-    } catch (err) {
-      console.error(err);
-      setStatus('Error al descargar: ' + err.message);
-    }
-  }
-
-  // ============================================================
-  //  Carga de archivo local
-  // ============================================================
-  el('file').addEventListener('change', async (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-    setStatus('Leyendo archivo…');
-    try {
-      const arr = await file.arrayBuffer();
-      await loadAudioFromArrayBuffer(arr, file.name);
-    } catch (err) {
-      console.error(err);
-      setStatus('Error: ' + err.message);
-    }
-  });
-
-  el('searchBtn').addEventListener('click', searchYouTube);
-  el('search').addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') { e.preventDefault(); searchYouTube(); }
   });
 
   ['density', 'streams', 'chords'].forEach(id => {
@@ -864,7 +692,6 @@
   //  Input: TECLADO
   // ============================================================
   window.addEventListener('keydown', (e) => {
-    if (e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA')) return;
     if (e.code === 'Space') {
       e.preventDefault();
       if (!e.repeat) togglePlay();
