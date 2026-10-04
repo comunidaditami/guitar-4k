@@ -1,0 +1,1006 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>Guitar 4K — Chart configurable</title>
+<style>
+  * { box-sizing: border-box; }
+  html, body {
+    overscroll-behavior: none;
+    -webkit-text-size-adjust: 100%;
+  }
+  body {
+    margin: 0;
+    background: radial-gradient(circle at 50% 0%, #101a30 0%, #060912 60%);
+    color: #e6ecff;
+    font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+    display: flex; flex-direction: column; align-items: center;
+    min-height: 100vh;
+    min-height: 100dvh;
+    padding: 10px;
+    gap: 8px;
+    -webkit-user-select: none; user-select: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+  h1 { font-size: 17px; margin: 0; letter-spacing: 4px; font-weight: 800; }
+  h1 span { color: #3b82f6; }
+  #controls {
+    display: flex; flex-wrap: wrap; gap: 8px 14px;
+    align-items: center; justify-content: center;
+    background: #0f1626; border: 1px solid #1f2c44;
+    border-radius: 12px; padding: 8px 14px;
+    width: 100%; max-width: 940px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+  }
+  #controls label {
+    display: flex; gap: 6px; align-items: center;
+    font-size: 12px; color: #9fb0cf; letter-spacing: .3px;
+  }
+  input[type=range] { width: 74px; accent-color: #3b82f6; }
+  input[type=file] { font-size: 11px; color: #9fb0cf; max-width: 170px; }
+  .val {
+    min-width: 36px; text-align: right;
+    color: #60a5fa; font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    font-size: 12px; letter-spacing: 0;
+  }
+  button {
+    color: white; border: none;
+    padding: 7px 12px; border-radius: 8px; cursor: pointer;
+    font-weight: 600; font-size: 13px; transition: background .15s;
+    min-width: 84px; touch-action: manipulation;
+  }
+  #play    { background: #3b82f6; }
+  #play:hover:not(:disabled)    { background: #2563eb; }
+  #stop    { background: #ef4444; }
+  #stop:hover:not(:disabled)    { background: #dc2626; }
+  #restart { background: #475569; }
+  #restart:hover:not(:disabled) { background: #334155; }
+  button:disabled { background: #29354a !important; color: #5b6b85 !important; cursor: not-allowed; }
+  #status { font-size: 12px; color: #9fb0cf; min-height: 14px; text-align: center; padding: 0 8px; }
+  #hud {
+    display: flex; gap: 20px; font-size: 14px; font-weight: 700;
+    font-variant-numeric: tabular-nums; letter-spacing: .5px;
+  }
+  #hud .k { color: #7c8fae; font-weight: 500; font-size: 10px; margin-right: 4px; letter-spacing: 1px; }
+  #hud .v { color: #facc15; }
+  #stats {
+    font-size: 11px; color: #6d80a0; letter-spacing: .4px;
+    font-variant-numeric: tabular-nums;
+    display: flex; gap: 12px; flex-wrap: wrap; justify-content: center;
+  }
+  #stats b { color: #9fb0cf; font-weight: 600; }
+  #game {
+    display: block;
+    background: #050810;
+    border-radius: 14px;
+    border: 1px solid #1f2c44;
+    box-shadow: 0 0 60px rgba(59,130,246,0.12), inset 0 0 40px rgba(0,0,0,0.6);
+    touch-action: none;
+    -webkit-user-select: none; user-select: none;
+    -webkit-tap-highlight-color: transparent;
+    max-width: 100%;
+    max-height: calc(100vh - 260px);
+    max-height: calc(100dvh - 260px);
+    width: auto; height: auto;
+  }
+  .hint { font-size: 11px; color: #566a88; letter-spacing: 1px; text-align: center; padding-bottom: 4px; }
+  @media (max-width: 640px) {
+    h1 { font-size: 14px; letter-spacing: 3px; }
+    #controls { gap: 6px 10px; padding: 7px 10px; }
+    #controls label { font-size: 11px; gap: 4px; }
+    input[type=range] { width: 58px; }
+    input[type=file] { max-width: 130px; font-size: 10px; }
+    .val { min-width: 30px; font-size: 11px; }
+    button { padding: 6px 9px; font-size: 12px; min-width: 68px; }
+    #hud { gap: 14px; font-size: 13px; }
+    #hud .k { font-size: 9px; }
+    #stats { font-size: 10px; gap: 8px; }
+    #game { max-height: calc(100vh - 230px); max-height: calc(100dvh - 230px); }
+  }
+</style>
+</head>
+<body>
+
+<h1>GUITAR <span>4K</span></h1>
+
+<div id="controls">
+  <input type="file" id="file" accept="audio/*">
+  <label>Densidad
+    <input type="range" id="density" min="0" max="1" step="0.02" value="0.55">
+    <span class="val" id="densityVal">55</span>
+  </label>
+  <label>Streams
+    <input type="range" id="streams" min="0" max="1" step="0.02" value="0.45">
+    <span class="val" id="streamsVal">45</span>
+  </label>
+  <label>Acordes
+    <input type="range" id="chords" min="0" max="1" step="0.02" value="0.25">
+    <span class="val" id="chordsVal">25</span>
+  </label>
+  <label>Velocidad
+    <input type="range" id="speed" min="0.6" max="1.8" step="0.05" value="1">
+    <span class="val" id="speedVal">x1.00</span>
+  </label>
+  <button id="play" disabled>▶ Jugar</button>
+  <button id="stop" disabled>⏹ Parar</button>
+  <button id="restart" disabled>↻ Reiniciar</button>
+</div>
+
+<div id="hud">
+  <div><span class="k">SCORE</span><span class="v" id="score">0</span></div>
+  <div><span class="k">COMBO</span><span class="v" id="combo">0</span></div>
+  <div><span class="k">NOTAS</span><span class="v" id="notecount">0</span></div>
+</div>
+
+<div id="stats">
+  <div>NPS <b id="nps">0.00</b></div>
+  <div>Carriles <b id="lanes">0 · 0 · 0 · 0</b></div>
+  <div>Superset <b id="supercount">0</b></div>
+</div>
+
+<div id="status">Elige un archivo de audio para comenzar.</div>
+<canvas id="game" width="400" height="640"></canvas>
+<div class="hint" id="hint">TECLAS: D · F · J · K · [ESPACIO] pausar · [ESC] parar</div>
+
+<script>
+(() => {
+  'use strict';
+
+  const isTouch = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
+  if (isTouch) {
+    document.getElementById('hint').textContent = 'TOCA EL CARRIL PARA GOLPEAR';
+  }
+
+  // ============================================================
+  //  FFT radix-2 iterativa (in-place)
+  // ============================================================
+  function fft(re, im) {
+    const n = re.length;
+    for (let i = 1, j = 0; i < n; i++) {
+      let bit = n >> 1;
+      for (; j & bit; bit >>= 1) j ^= bit;
+      j ^= bit;
+      if (i < j) {
+        let t = re[i]; re[i] = re[j]; re[j] = t;
+        t = im[i]; im[i] = im[j]; im[j] = t;
+      }
+    }
+    for (let len = 2; len <= n; len <<= 1) {
+      const ang = -2 * Math.PI / len;
+      const wr = Math.cos(ang), wi = Math.sin(ang);
+      const half = len >> 1;
+      for (let i = 0; i < n; i += len) {
+        let cr = 1, ci = 0;
+        for (let k = 0; k < half; k++) {
+          const ur = re[i + k], ui = im[i + k];
+          const vr = re[i + k + half] * cr - im[i + k + half] * ci;
+          const vi = re[i + k + half] * ci + im[i + k + half] * cr;
+          re[i + k] = ur + vr;          im[i + k] = ui + vi;
+          re[i + k + half] = ur - vr;   im[i + k + half] = ui - vi;
+          const ncr = cr * wr - ci * wi;
+          ci = cr * wi + ci * wr;
+          cr = ncr;
+        }
+      }
+    }
+  }
+
+  // ============================================================
+  //  Estado global
+  // ============================================================
+  let actx = null;
+  let audioBuffer = null;
+  let sourceNode = null;
+  let sourceToken = 0;
+  let startTime = 0;
+  let pausedAt = 0;
+  let gameState = 'idle';
+  let songDuration = 0;
+
+  let analysisResult = null;
+  let notes = [];
+
+  let score = 0, combo = 0, maxCombo = 0, hits = 0, misses = 0;
+  let popups = [];
+
+  let laneKey   = [0, 0, 0, 0];
+  let laneTouch = [0, 0, 0, 0];
+  let lanePressed = [0, 0, 0, 0];
+  let laneFlash   = [0, 0, 0, 0];
+
+  // ============================================================
+  //  Layout
+  // ============================================================
+  const canvas = document.getElementById('game');
+  const g = canvas.getContext('2d');
+  const W = canvas.width, H = canvas.height;
+
+  const LANES = 4;
+  const MARGIN = 15;
+  const GAP = 10;
+  const LANE_W = (W - 2 * MARGIN - (LANES - 1) * GAP) / LANES;
+  const HIT_Y = H - 110;
+  const LANE_COLORS = ['#4ade80', '#f87171', '#facc15', '#60a5fa'];
+  const LANE_GLOWS  = ['rgba(74,222,128,', 'rgba(248,113,113,',
+                       'rgba(250,204,21,',  'rgba(96,165,250,'];
+  const LANE_KEYS   = ['d', 'f', 'j', 'k'];
+
+  const HIT_WINDOW_GOOD = isTouch ? 0.22 : 0.16;
+  const HIT_WINDOW_PERF = isTouch ? 0.13 : 0.085;
+
+  // ============================================================
+  //  Utilidades
+  // ============================================================
+  function el(id) { return document.getElementById(id); }
+  function setStatus(t) { el('status').textContent = t; }
+
+  function updateSliderLabels() {
+    el('densityVal').textContent = Math.round(parseFloat(el('density').value) * 100);
+    el('streamsVal').textContent = Math.round(parseFloat(el('streams').value) * 100);
+    el('chordsVal').textContent  = Math.round(parseFloat(el('chords').value) * 100);
+    el('speedVal').textContent   = 'x' + parseFloat(el('speed').value).toFixed(2);
+  }
+
+  function updateButtons() {
+    const playBtn = el('play');
+    if (gameState === 'idle') {
+      playBtn.textContent = '▶ Jugar';
+      playBtn.disabled = !audioBuffer;
+    } else if (gameState === 'playing') {
+      playBtn.textContent = '⏸ Pausar';
+      playBtn.disabled = false;
+    } else if (gameState === 'paused') {
+      playBtn.textContent = '▶ Reanudar';
+      playBtn.disabled = false;
+    }
+    const inGame = gameState !== 'idle';
+    el('stop').disabled = !inGame;
+    el('restart').disabled = !audioBuffer;
+  }
+
+  function recomputeLanePressed() {
+    for (let i = 0; i < 4; i++) {
+      lanePressed[i] = (laneKey[i] > 0 || laneTouch[i] > 0) ? 1 : 0;
+    }
+  }
+
+  function getMono(buffer) {
+    const ch = buffer.numberOfChannels;
+    const len = buffer.length;
+    const out = new Float32Array(len);
+    for (let c = 0; c < ch; c++) {
+      const d = buffer.getChannelData(c);
+      for (let i = 0; i < len; i++) out[i] += d[i];
+    }
+    if (ch > 1) for (let i = 0; i < len; i++) out[i] /= ch;
+    return out;
+  }
+
+  // ============================================================
+  //  Pesos por frecuencia: SOLO BANDA MELÓDICA / VOCAL
+  //  Rango útil: 150 Hz a 5 kHz.
+  //  Bombo/bajo (<150 Hz) y hi-hats/platillos (>5 kHz) → peso 0.
+  // ============================================================
+  function melodyWeight(hz) {
+    if (hz < 150) return 0;
+    if (hz < 300) return (hz - 150) / 150;           // rampa 150→300 Hz
+    if (hz <= 3000) return 1;                        // 300 Hz – 3 kHz: máximo
+    if (hz <= 5000) return 1 - (hz - 3000) / 2000;   // rampa 3→5 kHz
+    return 0;
+  }
+
+  // ============================================================
+  //  ANÁLISIS: superset con umbral adaptativo local
+  // ============================================================
+  async function analyze(buffer) {
+    const sr = buffer.sampleRate;
+    const data = getMono(buffer);
+    const len = data.length;
+
+    const N = 2048, HOP = 512, half = N >> 1;
+    const numFrames = Math.max(1, Math.floor((len - N) / HOP) + 1);
+
+    const win = new Float32Array(N);
+    for (let i = 0; i < N; i++) win[i] = 0.5 * (1 - Math.cos(2 * Math.PI * i / (N - 1)));
+
+    // Bandas DENTRO de la zona melódica (150 Hz – 5 kHz)
+    const bandHz = [[150, 600], [600, 1500], [1500, 3000], [3000, 5000]];
+    const bandBin = bandHz.map(([lo, hi]) => [
+      Math.max(1, Math.floor(lo * N / sr)),
+      Math.min(half - 1, Math.ceil(hi * N / sr))
+    ]);
+    const bandOfK = new Int8Array(half).fill(-1);
+    for (let b = 0; b < 4; b++) {
+      const [lo, hi] = bandBin[b];
+      for (let k = lo; k < hi; k++) bandOfK[k] = b;
+    }
+
+    // Precalcular el peso melódico por bin (0 fuera del rango vocal)
+    const binWeight = new Float32Array(half);
+    for (let k = 0; k < half; k++) {
+      const hz = k * sr / N;
+      binWeight[k] = melodyWeight(hz);
+    }
+
+    const flux = new Float32Array(numFrames);
+    const bandFlux = [
+      new Float32Array(numFrames),
+      new Float32Array(numFrames),
+      new Float32Array(numFrames),
+      new Float32Array(numFrames)
+    ];
+
+    const re = new Float32Array(N), im = new Float32Array(N);
+    let prevMag = new Float32Array(half);
+    let curMag  = new Float32Array(half);
+
+    for (let f = 0; f < numFrames; f++) {
+      const off = f * HOP;
+      for (let i = 0; i < N; i++) { re[i] = data[off + i] * win[i]; im[i] = 0; }
+      fft(re, im);
+
+      let total = 0;
+      for (let k = 0; k < half; k++) {
+        const m = Math.sqrt(re[k] * re[k] + im[k] * im[k]);
+        curMag[k] = m;
+        const w = binWeight[k];
+        if (w > 0) {
+          const d = m - prevMag[k];
+          if (d > 0) {
+            // Aplicamos el peso melódico: solo cuenta la energía
+            // en 150 Hz–5 kHz. Bombo, bajo, hi-hats y platillos ignorados.
+            const wd = d * w;
+            total += wd;
+            const b = bandOfK[k];
+            if (b >= 0) bandFlux[b][f] += wd;
+          }
+        }
+      }
+      flux[f] = total;
+      const tmp = prevMag; prevMag = curMag; curMag = tmp;
+
+      if ((f & 511) === 0) {
+        setStatus(`Analizando (melodía)… ${Math.round(f / numFrames * 100)}%`);
+        await new Promise(r => setTimeout(r, 0));
+      }
+    }
+
+    let gMean = 0;
+    for (let f = 0; f < numFrames; f++) gMean += flux[f];
+    gMean /= numFrames;
+
+    const bandMean = [0, 0, 0, 0];
+    for (let b = 0; b < 4; b++) {
+      let s = 0;
+      for (let f = 0; f < numFrames; f++) s += bandFlux[b][f];
+      bandMean[b] = s / numFrames + 1e-6;
+    }
+
+    // Baseline móvil (±500 ms)
+    const BASE_WIN = Math.round(0.50 * sr / HOP);
+    const cum = new Float64Array(numFrames + 1);
+    for (let i = 0; i < numFrames; i++) cum[i + 1] = cum[i] + flux[i];
+    const baseline = new Float32Array(numFrames);
+    for (let f = 0; f < numFrames; f++) {
+      const a = Math.max(0, f - BASE_WIN);
+      const b = Math.min(numFrames - 1, f + BASE_WIN);
+      baseline[f] = (cum[b + 1] - cum[a]) / (b - a + 1);
+    }
+
+    const LOCAL = Math.round(0.15 * sr / HOP);
+    const minDistSuper = Math.round(0.035 * sr / HOP);
+    const absFloor = gMean * 0.06;   // más bajo: solo entra energía melódica
+    const adaptiveFactor = 1.30;     // más sensible: melodía tiene ataques suaves
+
+    const onsets = [];
+    let lastPeak = -1e9;
+
+    for (let f = 2; f < numFrames - 2; f++) {
+      if (flux[f] < absFloor) continue;
+      if (flux[f] < baseline[f] * adaptiveFactor) continue;
+      if (flux[f] < flux[f - 1] || flux[f] < flux[f + 1]) continue;
+
+      let s = 0, c = 0;
+      const a = Math.max(0, f - LOCAL), b = Math.min(numFrames - 1, f + LOCAL);
+      for (let j = a; j <= b; j++) { s += flux[j]; c++; }
+      const localMean = s / c;
+      if (flux[f] < localMean * 1.05) continue;
+      if (f - lastPeak < minDistSuper) continue;
+
+      const zs = [0, 0, 0, 0];
+      for (let bi = 0; bi < 4; bi++) {
+        zs[bi] = bandFlux[bi][f] / bandMean[bi];
+      }
+
+      onsets.push({
+        time: (f * HOP + N / 2) / sr,
+        strength: flux[f],
+        baseline: baseline[f],
+        zScores: zs
+      });
+      lastPeak = f;
+    }
+
+    return { onsets, duration: buffer.duration, gMean };
+  }
+
+  // ============================================================
+  //  Construcción del chart
+  // ============================================================
+  function buildChart() {
+    if (!analysisResult || analysisResult.onsets.length === 0) {
+      notes = [];
+      updateStats();
+      return;
+    }
+
+    const density = parseFloat(el('density').value);
+    const streams = parseFloat(el('streams').value);
+    const chords  = parseFloat(el('chords').value);
+
+    const superset = analysisResult.onsets;
+    const keepFrac = 0.20 + density * 0.80;
+
+    const chunkSec = 0.5;
+    const localWinSec = 2.0;
+    const duration = songDuration > 0 ? songDuration : 1;
+    const numChunks = Math.max(1, Math.ceil(duration / chunkSec));
+
+    const chunkBins = Array.from({ length: numChunks }, () => []);
+    for (const o of superset) {
+      let ci = Math.floor(o.time / chunkSec);
+      if (ci < 0) ci = 0;
+      if (ci >= numChunks) ci = numChunks - 1;
+      chunkBins[ci].push(o.strength);
+    }
+
+    const chunkRadius = Math.max(1, Math.round(localWinSec / chunkSec));
+    const chunkThresholds = new Float32Array(numChunks);
+
+    for (let ci = 0; ci < numChunks; ci++) {
+      const lo = Math.max(0, ci - chunkRadius);
+      const hi = Math.min(numChunks - 1, ci + chunkRadius);
+      const allStr = [];
+      for (let cj = lo; cj <= hi; cj++) {
+        const bin = chunkBins[cj];
+        for (let k = 0; k < bin.length; k++) allStr.push(bin[k]);
+      }
+      if (allStr.length === 0) {
+        chunkThresholds[ci] = 0;
+        continue;
+      }
+      allStr.sort((a, b) => a - b);
+      const idx = Math.min(
+        allStr.length - 1,
+        Math.floor((1 - keepFrac) * allStr.length)
+      );
+      chunkThresholds[ci] = allStr[idx];
+    }
+
+    const minDist = 0.200 - streams * 0.155;
+
+    const filtered = [];
+    let lastTime = -Infinity;
+    for (const n of superset) {
+      let ci = Math.floor(n.time / chunkSec);
+      if (ci < 0) ci = 0;
+      if (ci >= numChunks) ci = numChunks - 1;
+
+      if (n.strength < chunkThresholds[ci]) continue;
+      if (n.time - lastTime < minDist) continue;
+
+      filtered.push(n);
+      lastTime = n.time;
+    }
+
+    const chordRatio = 1 - chords * 0.55;
+
+    const out = [];
+    for (const n of filtered) {
+      const zs = n.zScores;
+      let maxZ = zs[0];
+      for (let i = 1; i < 4; i++) if (zs[i] > maxZ) maxZ = zs[i];
+      if (maxZ <= 0) {
+        out.push({ time: n.time, lane: 0, strength: n.strength, judged: false });
+        continue;
+      }
+      const cut = maxZ * chordRatio;
+      for (let i = 0; i < 4; i++) {
+        if (zs[i] >= cut) {
+          out.push({ time: n.time, lane: i, strength: n.strength, judged: false });
+        }
+      }
+    }
+
+    out.sort((a, b) => a.time - b.time);
+
+    if (gameState === 'playing' || gameState === 'paused') {
+      const now = currentSongTime();
+      for (const n of out) {
+        if (n.time < now - HIT_WINDOW_GOOD) n.judged = true;
+      }
+    }
+
+    notes = out;
+    updateStats();
+  }
+
+  function updateStats() {
+    const total = notes.length;
+    const nps = songDuration > 0 ? total / songDuration : 0;
+    const lanes = [0, 0, 0, 0];
+    for (const n of notes) lanes[n.lane]++;
+
+    el('notecount').textContent = total;
+    el('nps').textContent = nps.toFixed(2);
+    el('lanes').textContent = lanes.join(' · ');
+    el('supercount').textContent = analysisResult ? analysisResult.onsets.length : 0;
+  }
+
+  // ============================================================
+  //  Reproducción
+  // ============================================================
+  function currentSongTime() {
+    if (gameState === 'playing') return actx.currentTime - startTime;
+    if (gameState === 'paused') return pausedAt;
+    return 0;
+  }
+
+  function killSource() {
+    if (sourceNode) {
+      const old = sourceNode;
+      sourceNode = null;
+      sourceToken++;
+      old.onended = null;
+      try { old.stop(); } catch (_) {}
+    }
+  }
+
+  function startFrom(bufferOffset, delay) {
+    const myToken = ++sourceToken;
+    const when = actx.currentTime + delay;
+    const node = actx.createBufferSource();
+    node.buffer = audioBuffer;
+    node.connect(actx.destination);
+    node.start(when, bufferOffset);
+
+    sourceNode = node;
+    startTime = when - bufferOffset;
+
+    node.onended = () => {
+      if (myToken !== sourceToken) return;
+      if (gameState !== 'playing') return;
+      gameState = 'idle';
+      pausedAt = 0;
+      setStatus(`Fin · Score ${score} · Combo máx ${maxCombo} · Aciertos ${hits} · Fallos ${misses}`);
+      updateButtons();
+    };
+  }
+
+  function startFresh() {
+    if (!audioBuffer || !analysisResult) return;
+    killSource();
+
+    score = 0; combo = 0; maxCombo = 0; hits = 0; misses = 0;
+    popups = [];
+    for (const n of notes) n.judged = false;
+    el('score').textContent = '0';
+    el('combo').textContent = '0';
+
+    gameState = 'playing';
+    pausedAt = 0;
+    startFrom(0, 0.6);
+    setStatus('¡A tocar!');
+    updateButtons();
+  }
+
+  function pauseGame() {
+    if (gameState !== 'playing') return;
+    pausedAt = actx.currentTime - startTime;
+    killSource();
+    gameState = 'paused';
+    setStatus(`Pausado en ${pausedAt.toFixed(1)}s`);
+    updateButtons();
+  }
+
+  function resumeGame() {
+    if (gameState !== 'paused') return;
+    gameState = 'playing';
+    startFrom(pausedAt, 0.12);
+    setStatus('¡A tocar!');
+    updateButtons();
+  }
+
+  function stopGame() {
+    if (gameState === 'idle') return;
+    killSource();
+    for (const n of notes) n.judged = false;
+    score = 0; combo = 0; hits = 0; misses = 0;
+    popups = [];
+    laneFlash = [0, 0, 0, 0];
+    laneKey = [0, 0, 0, 0];
+    laneTouch = [0, 0, 0, 0];
+    recomputeLanePressed();
+    touchState.clear();
+    pausedAt = 0;
+    el('score').textContent = '0';
+    el('combo').textContent = '0';
+    gameState = 'idle';
+    setStatus('Detenido · pulsa Jugar');
+    updateButtons();
+  }
+
+  function togglePlay() {
+    if (gameState === 'idle')        startFresh();
+    else if (gameState === 'playing') pauseGame();
+    else if (gameState === 'paused')  resumeGame();
+  }
+
+  // ============================================================
+  //  Carga de archivo
+  // ============================================================
+  el('file').addEventListener('change', async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    killSource();
+    gameState = 'idle';
+    pausedAt = 0;
+
+    el('play').disabled = true;
+    el('stop').disabled = true;
+    el('restart').disabled = true;
+
+    notes = []; analysisResult = null;
+    score = 0; combo = 0; hits = 0; misses = 0;
+    popups = [];
+    el('score').textContent = '0';
+    el('combo').textContent = '0';
+    updateStats();
+
+    setStatus('Leyendo archivo…');
+    try {
+      if (!actx) actx = new (window.AudioContext || window.webkitAudioContext)();
+      if (actx.state === 'suspended') await actx.resume();
+
+      const arr = await file.arrayBuffer();
+      setStatus('Decodificando audio…');
+      audioBuffer = await actx.decodeAudioData(arr);
+      songDuration = audioBuffer.duration;
+
+      analysisResult = await analyze(audioBuffer);
+      buildChart();
+
+      setStatus(`Listo (melodía) · ${analysisResult.onsets.length} onsets · ${songDuration.toFixed(1)}s`);
+      updateButtons();
+    } catch (err) {
+      console.error(err);
+      setStatus('Error: ' + err.message);
+      updateButtons();
+    }
+  });
+
+  ['density', 'streams', 'chords'].forEach(id => {
+    el(id).addEventListener('input', () => {
+      updateSliderLabels();
+      if (!analysisResult) return;
+      buildChart();
+    });
+  });
+  el('speed').addEventListener('input', updateSliderLabels);
+
+  el('play').addEventListener('click', togglePlay);
+  el('stop').addEventListener('click', stopGame);
+  el('restart').addEventListener('click', startFresh);
+
+  // ============================================================
+  //  Input: TECLADO
+  // ============================================================
+  window.addEventListener('keydown', (e) => {
+    if (e.code === 'Space') {
+      e.preventDefault();
+      if (!e.repeat) togglePlay();
+      return;
+    }
+    if (e.key === 'Escape') {
+      e.preventDefault();
+      stopGame();
+      return;
+    }
+    if (e.repeat) return;
+    const k = e.key.toLowerCase();
+    const lane = LANE_KEYS.indexOf(k);
+    if (lane === -1) return;
+    e.preventDefault();
+    laneKey[lane] = 1;
+    recomputeLanePressed();
+    laneFlash[lane] = 1;
+    if (gameState === 'playing') tryHit(lane);
+  });
+
+  window.addEventListener('keyup', (e) => {
+    const k = e.key.toLowerCase();
+    const lane = LANE_KEYS.indexOf(k);
+    if (lane === -1) return;
+    laneKey[lane] = 0;
+    recomputeLanePressed();
+  });
+
+  // ============================================================
+  //  Input: TOUCH
+  // ============================================================
+  const touchState = new Map();
+
+  function clientToLane(clientX, clientY) {
+    const rect = canvas.getBoundingClientRect();
+    if (rect.width === 0 || rect.height === 0) return -1;
+    const x = (clientX - rect.left) * (W / rect.width);
+    const y = (clientY - rect.top)  * (H / rect.height);
+    if (x < 0 || x > W || y < 0 || y > H) return -1;
+    if (x < MARGIN) return 0;
+    if (x > W - MARGIN) return 3;
+    const rel = x - MARGIN;
+    const lane = Math.floor(rel / (LANE_W + GAP));
+    return Math.max(0, Math.min(3, lane));
+  }
+
+  function pressLaneTouch(lane) {
+    if (lane < 0 || lane > 3) return;
+    laneTouch[lane]++;
+    recomputeLanePressed();
+    laneFlash[lane] = 1;
+    if (gameState === 'playing') tryHit(lane);
+  }
+
+  function releaseLaneTouch(lane) {
+    if (lane < 0 || lane > 3) return;
+    laneTouch[lane] = Math.max(0, laneTouch[lane] - 1);
+    recomputeLanePressed();
+  }
+
+  function handleTouchStart(e) {
+    e.preventDefault();
+    for (const t of e.changedTouches) {
+      const lane = clientToLane(t.clientX, t.clientY);
+      touchState.set(t.identifier, lane);
+      pressLaneTouch(lane);
+    }
+  }
+
+  function handleTouchMove(e) {
+    e.preventDefault();
+    for (const t of e.changedTouches) {
+      const newLane = clientToLane(t.clientX, t.clientY);
+      const oldLane = touchState.has(t.identifier) ? touchState.get(t.identifier) : -1;
+      if (newLane === oldLane) continue;
+      releaseLaneTouch(oldLane);
+      touchState.set(t.identifier, newLane);
+      if (newLane >= 0) {
+        laneTouch[newLane]++;
+        recomputeLanePressed();
+        laneFlash[newLane] = 1;
+      }
+    }
+  }
+
+  function handleTouchEnd(e) {
+    e.preventDefault();
+    for (const t of e.changedTouches) {
+      const lane = touchState.has(t.identifier) ? touchState.get(t.identifier) : -1;
+      touchState.delete(t.identifier);
+      releaseLaneTouch(lane);
+    }
+  }
+
+  canvas.addEventListener('touchstart',  handleTouchStart, { passive: false });
+  canvas.addEventListener('touchmove',   handleTouchMove,  { passive: false });
+  canvas.addEventListener('touchend',    handleTouchEnd,   { passive: false });
+  canvas.addEventListener('touchcancel', handleTouchEnd,   { passive: false });
+  canvas.addEventListener('contextmenu', (e) => e.preventDefault());
+  document.addEventListener('gesturestart', (e) => e.preventDefault());
+
+  // ============================================================
+  //  Hit test
+  // ============================================================
+  function tryHit(lane) {
+    const songTime = currentSongTime();
+    let best = null, bestDelta = Infinity;
+    for (const n of notes) {
+      if (n.judged || n.lane !== lane) continue;
+      const d = Math.abs(n.time - songTime);
+      if (d < bestDelta) { bestDelta = d; best = n; }
+      if (n.time - songTime > 0.5) break;
+    }
+    if (!best || bestDelta > HIT_WINDOW_GOOD) return;
+
+    best.judged = true;
+    const x = laneCenter(best.lane);
+    if (bestDelta < HIT_WINDOW_PERF) {
+      score += 100; combo++; hits++;
+      popups.push({ x, y: HIT_Y - 20, life: 0.7, text: 'PERFECT', color: '#4ade80' });
+    } else {
+      score += 50; combo++; hits++;
+      popups.push({ x, y: HIT_Y - 20, life: 0.6, text: 'GOOD', color: '#facc15' });
+    }
+    if (combo > maxCombo) maxCombo = combo;
+    el('score').textContent = score;
+    el('combo').textContent = combo;
+  }
+
+  // ============================================================
+  //  Render
+  // ============================================================
+  function laneCenter(lane) {
+    return MARGIN + lane * (LANE_W + GAP) + LANE_W / 2;
+  }
+  function laneLeft(lane) {
+    return MARGIN + lane * (LANE_W + GAP);
+  }
+
+  function roundRect(c, x, y, w, h, r) {
+    c.beginPath();
+    c.moveTo(x + r, y);
+    c.arcTo(x + w, y, x + w, y + h, r);
+    c.arcTo(x + w, y + h, x, y + h, r);
+    c.arcTo(x, y + h, x, y, r);
+    c.arcTo(x, y, x + w, y, r);
+    c.closePath();
+  }
+
+  function drawBackground() {
+    g.fillStyle = '#050810';
+    g.fillRect(0, 0, W, H);
+    for (let i = 0; i < LANES; i++) {
+      const x = laneLeft(i);
+      const grad = g.createLinearGradient(0, 0, 0, H);
+      grad.addColorStop(0, 'rgba(255,255,255,0.02)');
+      grad.addColorStop(1, 'rgba(255,255,255,0.06)');
+      g.fillStyle = grad;
+      g.fillRect(x, 0, LANE_W, H);
+      if (laneFlash[i] > 0) {
+        const a = laneFlash[i] * 0.35;
+        g.fillStyle = LANE_GLOWS[i] + a + ')';
+        g.fillRect(x, 0, LANE_W, H);
+      }
+      g.strokeStyle = 'rgba(255,255,255,0.05)';
+      g.lineWidth = 1;
+      g.strokeRect(x + 0.5, 0.5, LANE_W - 1, H - 1);
+    }
+  }
+
+  function drawHitLine() {
+    g.fillStyle = 'rgba(255,255,255,0.12)';
+    g.fillRect(0, HIT_Y - 2, W, 4);
+    for (let i = 0; i < LANES; i++) {
+      const x = laneLeft(i);
+      const pressed = lanePressed[i] > 0 || laneFlash[i] > 0.5;
+      g.save();
+      if (pressed) {
+        g.shadowColor = LANE_COLORS[i];
+        g.shadowBlur = 22;
+      }
+      g.fillStyle = pressed ? LANE_COLORS[i] : 'rgba(255,255,255,0.18)';
+      roundRect(g, x + 6, HIT_Y - 14, LANE_W - 12, 28, 8);
+      g.fill();
+      g.restore();
+      g.fillStyle = pressed ? '#050810' : 'rgba(255,255,255,0.5)';
+      g.font = 'bold 14px system-ui';
+      g.textAlign = 'center';
+      g.textBaseline = 'middle';
+      g.fillText(LANE_KEYS[i].toUpperCase(), x + LANE_W / 2, HIT_Y + 1);
+    }
+  }
+
+  function drawNotes(songTime) {
+    const speedMul = parseFloat(el('speed').value);
+    const pxPerSec = 500 * speedMul;
+    for (const n of notes) {
+      if (n.judged) continue;
+      const dt = n.time - songTime;
+      const y = HIT_Y - dt * pxPerSec;
+      if (y < -40 || y > H + 40) continue;
+      const x = laneLeft(n.lane);
+      const w = LANE_W - 12;
+      const px = x + 6;
+      const ph = 22;
+      g.save();
+      g.shadowColor = LANE_COLORS[n.lane];
+      g.shadowBlur = 14;
+      g.fillStyle = LANE_COLORS[n.lane];
+      roundRect(g, px, y - ph / 2, w, ph, 6);
+      g.fill();
+      g.restore();
+      g.fillStyle = 'rgba(255,255,255,0.35)';
+      roundRect(g, px + 4, y - ph / 2 + 3, w - 8, 4, 2);
+      g.fill();
+    }
+  }
+
+  function drawPopups(dt) {
+    for (let i = popups.length - 1; i >= 0; i--) {
+      const p = popups[i];
+      p.life -= dt;
+      p.y -= 40 * dt;
+      if (p.life <= 0) { popups.splice(i, 1); continue; }
+      const a = Math.min(1, p.life * 2);
+      g.save();
+      g.globalAlpha = a;
+      g.fillStyle = p.color;
+      g.font = 'bold 13px system-ui';
+      g.textAlign = 'center';
+      g.fillText(p.text, p.x, p.y);
+      g.restore();
+    }
+  }
+
+  function drawProgress(songTime) {
+    if (!songDuration) return;
+    const p = Math.max(0, Math.min(1, songTime / songDuration));
+    g.fillStyle = 'rgba(255,255,255,0.08)';
+    g.fillRect(0, H - 4, W, 4);
+    g.fillStyle = '#3b82f6';
+    g.fillRect(0, H - 4, W * p, 4);
+  }
+
+  function drawPauseOverlay() {
+    if (gameState !== 'paused') return;
+    g.save();
+    g.fillStyle = 'rgba(5,8,16,0.55)';
+    g.fillRect(0, 0, W, H);
+    g.fillStyle = '#e6ecff';
+    g.font = 'bold 24px system-ui';
+    g.textAlign = 'center';
+    g.textBaseline = 'middle';
+    g.fillText('PAUSA', W / 2, H / 2 - 8);
+    g.fillStyle = '#7c8fae';
+    g.font = '12px system-ui';
+    g.fillText(isTouch ? 'TOCA ▶ PARA REANUDAR' : '[ESPACIO] reanudar', W / 2, H / 2 + 22);
+    g.restore();
+  }
+
+  // ============================================================
+  //  Loop principal
+  // ============================================================
+  let lastLoopT = 0;
+  function loop() {
+    requestAnimationFrame(loop);
+    const now = performance.now();
+    const dt = lastLoopT ? Math.min(0.05, (now - lastLoopT) / 1000) : 0.016;
+    lastLoopT = now;
+
+    const songTime = currentSongTime();
+
+    for (let i = 0; i < 4; i++) {
+      if (laneFlash[i] > 0) laneFlash[i] = Math.max(0, laneFlash[i] - dt * 4);
+    }
+
+    drawBackground();
+    drawNotes(songTime);
+    drawHitLine();
+    drawPopups(dt);
+    drawProgress(songTime);
+    drawPauseOverlay();
+
+    if (gameState === 'playing') {
+      for (const n of notes) {
+        if (n.judged) continue;
+        if (songTime - n.time > HIT_WINDOW_GOOD) {
+          n.judged = true;
+          combo = 0;
+          misses++;
+          el('combo').textContent = 0;
+        }
+      }
+    }
+  }
+
+  updateSliderLabels();
+  updateButtons();
+  loop();
+
+})();
+</script>
+</body>
+</html>
